@@ -1,5 +1,5 @@
 name: chatbot
-description: "A new Flutter project."
+description: "AI Assistant App."
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -18,10 +18,10 @@ dependencies:
   http: ^1.6.0
 
   # Internationalization & Date/Time
-  intl: ^0.19.0
+  intl: ^0.20.2
 
   # Chat Features
-  emoji_picker_flutter: ^3.0.0
+  emoji_picker_flutter: ^4.4.0
 
   # State Management & Preferences
   shared_preferences: ^2.2.2
@@ -32,7 +32,8 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
+  # Removed fonts section

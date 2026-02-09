@@ -1,6 +1,6 @@
+// lib/widgets/input_bar.dart - Use default config first
 import 'package:flutter/material.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
-import 'package:flutter/foundation.dart' as foundation;
 
 class InputBar extends StatefulWidget {
   final Function(String) onSendMessage;
@@ -52,107 +52,199 @@ class _InputBarState extends State<InputBar> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final colorScheme = theme.colorScheme;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
 
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: EdgeInsets.symmetric(
+            horizontal: isMobile ? 12 : 16,
+            vertical: isMobile ? 10 : 12,
+          ),
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF1E293B) : theme.colorScheme.surface,
+            border: Border(
+              top: BorderSide(
+                color: isDark ? const Color(0xFF334155) : Colors.grey.shade200,
+                width: 1,
+              ),
+            ),
           ),
           child: Row(
             children: [
-              IconButton(
-                icon: Icon(
-                  _showEmoji ? Icons.keyboard : Icons.sentiment_satisfied_alt_outlined,
-                  color: isDark ? Colors.blue[300]! : colorScheme.primary,
+              // Emoji button
+              Material(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(24),
+                child: InkWell(
+                  onTap: () {
+                    setState(() {
+                      _showEmoji = !_showEmoji;
+                      if (_showEmoji) {
+                        _focusNode.unfocus();
+                      } else {
+                        _focusNode.requestFocus();
+                      }
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(24),
+                  child: Container(
+                    width: isMobile ? 44 : 48,
+                    height: isMobile ? 44 : 48,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF334155) : Colors.grey.shade100,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _showEmoji ? Icons.keyboard_rounded : Icons.emoji_emotions_outlined,
+                      color: _showEmoji
+                          ? (isDark ? colorScheme.primary : colorScheme.primary)
+                          : (isDark ? Colors.grey[400] : Colors.grey[600]),
+                      size: isMobile ? 22 : 24,
+                    ),
+                  ),
                 ),
-                onPressed: () {
-                  setState(() {
-                    _showEmoji = !_showEmoji;
-                    if (_showEmoji) _focusNode.unfocus();
-                  });
-                },
               ),
 
+              SizedBox(width: isMobile ? 8 : 12),
+
+              // Text field
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF0F172A)
-                        : colorScheme.secondaryContainer.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(28),
-                    border: isDark
-                        ? Border.all(color: const Color(0xFF334155))
-                        : null,
+                    color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                    borderRadius: BorderRadius.circular(isMobile ? 24 : 28),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF334155) : Colors.grey.shade300,
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(isDark ? 0.1 : 0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: TextField(
                     controller: _textController,
                     focusNode: _focusNode,
                     style: TextStyle(
+                      fontSize: isMobile ? 15.5 : 16.5,
                       color: isDark ? Colors.white : Colors.black,
+                      fontWeight: FontWeight.w400,
                     ),
                     decoration: InputDecoration(
                       hintText: 'Type a message...',
                       hintStyle: TextStyle(
-                        color: isDark ? Colors.grey[500]! : Colors.grey[600]!,
+                        fontSize: isMobile ? 15.5 : 16.5,
+                        color: isDark ? Colors.grey[400]! : Colors.grey[500]!,
+                        fontWeight: FontWeight.w400,
                       ),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: isMobile ? 18 : 22,
+                        vertical: isMobile ? 12 : 14,
+                      ),
+                      suffixIcon: _isHasText
+                          ? IconButton(
+                        icon: Icon(
+                          Icons.send_rounded,
+                          color: colorScheme.primary,
+                          size: isMobile ? 20 : 22,
+                        ),
+                        onPressed: _sendMessage,
+                        padding: EdgeInsets.only(right: isMobile ? 12 : 16),
+                      )
+                          : null,
                     ),
-                    onSubmitted: (_) => _sendMessage(),
+                    onSubmitted: (text) {
+                      if (text.trim().isNotEmpty) {
+                        _sendMessage();
+                      }
+                    },
+                    maxLines: 4,
+                    minLines: 1,
+                    textInputAction: TextInputAction.send,
+                    keyboardType: TextInputType.multiline,
                   ),
                 ),
               ),
 
-              const SizedBox(width: 8),
+              SizedBox(width: isMobile ? 8 : 12),
 
-              CircleAvatar(
-                backgroundColor: _isHasText
-                    ? (isDark ? const Color(0xFF2563EB) : colorScheme.primary)
-                    : (isDark ? const Color(0xFF334155) : Colors.grey[300]!),
-                child: IconButton(
-                  icon: const Icon(Icons.send, color: Colors.white, size: 20),
-                  onPressed: _isHasText ? _sendMessage : null,
+              // Send button (fallback)
+              if (!_isHasText)
+                Container(
+                  width: isMobile ? 44 : 48,
+                  height: isMobile ? 44 : 48,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isDark ? const Color(0xFF334155) : Colors.grey.shade200,
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF475569) : Colors.grey.shade300,
+                      width: 1,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.send_rounded,
+                    color: isDark ? Colors.grey[600] : Colors.grey[400],
+                    size: isMobile ? 20 : 22,
+                  ),
+                )
+              else
+                Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(24),
+                  child: InkWell(
+                    onTap: _sendMessage,
+                    borderRadius: BorderRadius.circular(24),
+                    child: Container(
+                      width: isMobile ? 44 : 48,
+                      height: isMobile ? 44 : 48,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: isDark
+                              ? [const Color(0xFF2563EB), const Color(0xFF1D4ED8)]
+                              : [const Color(0xFF1A73E8), const Color(0xFF0D62FF)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: (isDark ? const Color(0xFF2563EB) : const Color(0xFF1A73E8))
+                                .withOpacity(0.4),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.send_rounded,
+                        color: Colors.white,
+                        size: isMobile ? 20 : 22,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
             ],
           ),
         ),
 
-        // Emoji Picker
-        Offstage(
-          offstage: !_showEmoji,
-          child: SizedBox(
-            height: 250,
+        // Emoji Picker - Use default config first
+        if (_showEmoji)
+          SizedBox(
+            height: isMobile ? 260 : 300,
             child: EmojiPicker(
+              onEmojiSelected: (category, emoji) {
+                // Do something when emoji is selected
+              },
               textEditingController: _textController,
-              config: Config(
-                height: 256,
-                checkPlatformCompatibility: true,
-                viewOrderConfig: const ViewOrderConfig(),
-                emojiViewConfig: EmojiViewConfig(
-                  emojiSizeMax: 28 * (foundation.defaultTargetPlatform == TargetPlatform.iOS ? 1.2 : 1.0),
-                  columns: 7,
-                  backgroundColor: isDark ? const Color(0xFF1E293B) : theme.colorScheme.surface,
-                ),
-                skinToneConfig: const SkinToneConfig(),
-                categoryViewConfig: CategoryViewConfig(
-                  backgroundColor: isDark ? const Color(0xFF1E293B) : theme.colorScheme.surface,
-                  indicatorColor: isDark ? Colors.blue[300]! : colorScheme.primary,
-                  iconColorSelected: isDark ? Colors.blue[300]! : colorScheme.primary,
-                  iconColor: isDark ? Colors.grey[400]! : Colors.grey[600]!,
-                ),
-                bottomActionBarConfig: const BottomActionBarConfig(
-                  enabled: false,
-                ),
-                searchViewConfig: SearchViewConfig(
-                  backgroundColor: isDark ? const Color(0xFF1E293B) : theme.colorScheme.surface,
-                ),
-              ),
+              // Don't pass any config initially - use defaults
             ),
           ),
-        ),
       ],
     );
   }
